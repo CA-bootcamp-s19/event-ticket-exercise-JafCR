@@ -30,7 +30,7 @@ contract EventTickets {
         mapping (address => uint) buyers;
     }
 
-    Event myEvent;
+    Event public myEvent;
 
     /*
         Define 3 logging events.
@@ -46,7 +46,7 @@ contract EventTickets {
         Create a modifier that throws an error if the msg.sender is not the owner.
     */
     modifier isOwner(address _address) { require (owner == _address); _;}
-    modifier isOpen() { require (myEvent.isOpen == true); _; }
+    modifier isEventOpen() { require (myEvent.isOpen == true); _; }
 
     modifier paidEnough(uint _numTicketsToBuy) { require(msg.value >= (TICKET_PRICE * _numTicketsToBuy )); _;}
 
@@ -57,12 +57,14 @@ contract EventTickets {
         _;
         uint _price = TICKET_PRICE * _numTicketsToBuy;
         uint amountToRefund = msg.value - _price;
+        //myEvent.buyers[_addr] -= _numTicketsToBuy;
         _addr.transfer(amountToRefund);
     }
 
-    modifier refund(uint _numTicketsToRefund, address payable _addr) {
+    modifier refund(address payable _addr) {
         _;
         uint amountToRefund = TICKET_PRICE * myEvent.buyers[_addr];
+        myEvent.buyers[_addr] = 0;
         _addr.transfer(amountToRefund);
     }
 
@@ -96,14 +98,14 @@ contract EventTickets {
     function readEvent()
         public
         view
-        returns(string memory description, string memory website, uint totalTickets, uint sales, bool isEventOpen)
+        returns(string memory description, string memory website, uint totalTickets, uint sales, bool isOpen)
     {
         description = myEvent.description;
         website = myEvent.website;
         totalTickets = myEvent.totalTickets;
         sales = myEvent.sales;
-        isEventOpen = myEvent.isOpen;
-        return (description, website, totalTickets, sales, isEventOpen);
+        isOpen = myEvent.isOpen;
+        return (description, website, totalTickets, sales, isOpen);
     }
 
     /*
@@ -137,12 +139,12 @@ contract EventTickets {
     function buyTickets(uint _numTicketsToBuy)
     public
     payable
-    isOpen()
+    isEventOpen()
     paidEnough(_numTicketsToBuy)
     enoughTickets(_numTicketsToBuy)
     checkValue(_numTicketsToBuy, msg.sender)
     {
-        myEvent.buyers[msg.sender] += _numTicketsToBuy;
+        myEvent.buyers[msg.sender] = myEvent.buyers[msg.sender]  + _numTicketsToBuy;
         myEvent.totalTickets -= _numTicketsToBuy;
         myEvent.sales += _numTicketsToBuy;
         emit LogBuyTickets(msg.sender, _numTicketsToBuy);
@@ -159,14 +161,14 @@ contract EventTickets {
             - Transfer the appropriate amount to the refund requester.
             - Emit the appropriate event.
     */
-    function getRefund(uint _numTicketsToRefund)
+    function getRefund()
     public
     payable
     hasPurchasedTickets()
-    refund(_numTicketsToRefund, msg.sender)
+    refund(msg.sender)
     {
-        myEvent.totalTickets += _numTicketsToRefund;
-        emit LogGetRefund(msg.sender, _numTicketsToRefund);
+        myEvent.totalTickets += myEvent.buyers[msg.sender];
+        emit LogGetRefund(msg.sender, myEvent.buyers[msg.sender]);
     }
 
     /*
