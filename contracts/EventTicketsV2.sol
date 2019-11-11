@@ -8,8 +8,8 @@ contract EventTicketsV2 {
     /*
         Define an public owner variable. Set it to the creator of the contract when it is initialized.
     */
-    address public owner;
-    uint   PRICE_TICKET = 100 wei;
+    address payable public owner;
+    uint   PRICE_TICKET = 1000000000000000000 wei;
 
     constructor() public payable {
         owner = msg.sender;
@@ -67,9 +67,11 @@ contract EventTicketsV2 {
     //refund them after pay for item
         _;
         uint _price = PRICE_TICKET * _numTicketsToBuy;
-        uint amountToRefund = msg.value - _price;
-        _addr.transfer(amountToRefund);
+        uint totalTicketsPrice = msg.value - _price;
+        _addr.transfer(totalTicketsPrice);
+        //revert();
     }
+
 
     /*
         Define a function called addEvent().
@@ -146,6 +148,7 @@ contract EventTicketsV2 {
     {
         events[_eventID].buyers[msg.sender] += _numTicketsToBuy;
         events[_eventID].totalTickets -= _numTicketsToBuy;
+        events[_eventID].sales += _numTicketsToBuy;
         emit LogBuyTickets(msg.sender, _eventID, _numTicketsToBuy);
     }
 
@@ -170,6 +173,11 @@ contract EventTicketsV2 {
     }
 
     
+    
+
+    
+    
+
     /*
         Define a function called getBuyerNumberTickets()
         This function takes one parameter, an event ID
@@ -196,9 +204,10 @@ contract EventTicketsV2 {
     public
     payable
     isOwner(msg.sender)
-    //withdrawBalance()
     {
-        //transfer the balance from those event sales to the contract owner
-        //emit the appropriate event
+        uint eventBalance = events[_eventId].sales * PRICE_TICKET;
+        events[_eventId].isOpen = false;
+        owner.transfer(eventBalance);
+        emit LogEndSale(owner, eventBalance, _eventId);
     }
 }
