@@ -183,12 +183,12 @@ contract EventTicketsV2 {
         This function takes one parameter, an event ID
         This function returns a uint, the number of tickets that the msg.sender has purchased.
     */
-    function getBuyerNumberTickets(uint eventId, address _buyersAddr)
+    function getBuyerNumberTickets(uint eventId)
     public
     view
     returns(uint totalTickets)
     {
-        return (events[eventId].buyers[_buyersAddr]);
+        return (events[eventId].buyers[msg.sender]);
     }
 
     /*

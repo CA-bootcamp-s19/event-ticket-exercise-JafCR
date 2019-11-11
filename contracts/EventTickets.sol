@@ -11,7 +11,7 @@ contract EventTickets {
         Use the appropriate keyword to create an associated getter function.
         Use the appropriate keyword to allow ether transfers.
      */
-    address payable owner;
+    address payable public owner;
 
     uint   TICKET_PRICE = 100 wei;
 
@@ -46,7 +46,7 @@ contract EventTickets {
         Create a modifier that throws an error if the msg.sender is not the owner.
     */
     modifier isOwner(address _address) { require (owner == _address); _;}
-    modifier isOpen() { require (myEvent.isOpen); _; }
+    modifier isOpen() { require (myEvent.isOpen == true); _; }
 
     modifier paidEnough(uint _numTicketsToBuy) { require(msg.value >= (TICKET_PRICE * _numTicketsToBuy )); _;}
 
@@ -81,9 +81,11 @@ contract EventTickets {
     */
     constructor(string memory _description, string memory _websiteURL, uint _tickets4Sale) public payable {
        owner = msg.sender;
+       myEvent.isOpen = true;
        myEvent.description = _description;
        myEvent.website = _websiteURL;
        myEvent.totalTickets = _tickets4Sale;
+       myEvent.sales = 0;
     }
 
     /*
@@ -142,6 +144,7 @@ contract EventTickets {
     {
         myEvent.buyers[msg.sender] += _numTicketsToBuy;
         myEvent.totalTickets -= _numTicketsToBuy;
+        myEvent.sales += _numTicketsToBuy;
         emit LogBuyTickets(msg.sender, _numTicketsToBuy);
     }
 
@@ -179,10 +182,13 @@ contract EventTickets {
     public
     payable
     isOwner(msg.sender)
-    withdrawBalance()
+    //withdrawBalance()
     {
         myEvent.isOpen = false;
-        emit LogEndSale(msg.sender, address(this).balance);
+        uint eventBalance = myEvent.sales * TICKET_PRICE;
+        owner.transfer(eventBalance);
+        emit LogEndSale(msg.sender, eventBalance);
+        myEvent.sales = 0;
     }
 
 
