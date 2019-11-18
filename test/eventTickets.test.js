@@ -69,6 +69,9 @@ contract('EventTicket', function(accounts) {
             it("the buyers account should be credited with tickets when they make a purchase", async() => {
                 await instance.buyTickets(2, {from: secondAccount, value: ticketPrice * 2})
                 const count = await instance.getBuyerTicketCount(secondAccount)
+                console.log("Ticket Price = " + ticketPrice)
+                console.log("Instance = " + instance)
+                console.log("Count = " + count)
         
                 assert.equal(count, 2, "the buyer should have 2 tickets in their account")
             })
